@@ -52,7 +52,7 @@ router.post('/signup', (req, res) => {
     db.User.create(req.body)
     .then(createdUser => {
       // we created a user. make a token, send token.
-      const token = jwt.sign(user.toJSON(), process.env.JWT_SECRET, {
+      const token = jwt.sign(createdUser.toJSON(), process.env.JWT_SECRET, {
         expiresIn: 60 * 60 * 24
       });
 
@@ -70,8 +70,17 @@ router.post('/signup', (req, res) => {
 });
 
 // This is what is returned when client queries for new user data
-router.get('/current/user', (req, res) => {
-  res.send('GET /auth/current/user STUB');
+router.post('/current/user', (req, res) => {
+  console.log('In the current user route. Should be logged-in user.', req.user);
+
+  if (!req.user || !req.user.id) {
+    return res.status(401).send({message: 'Unauthorized'});
+  }
+
+  // NOTE: this is user data from the time the token was issued.
+  // WARNING: if you update the user, those changes will not be reflected here.
+  // to avoid this, reissue a token when user data is changed.
+  res.send({user: req.user});
 });
 
 module.exports = router;
